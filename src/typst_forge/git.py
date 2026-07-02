@@ -84,7 +84,7 @@ def local_version(project_root: Path, requested: str | None = None) -> str:
 
     try:
         state = git_state(project_root)
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         state = GitState(root=project_root, commit=None, tags=())
 
     resolved = highest_version(list(state.tags))

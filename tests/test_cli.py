@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +38,44 @@ def init_repo(root: Path, kind: str, name: str, version: str) -> Path:
 
 
 class TypstForgeCliTest(unittest.TestCase):
+    def test_install_supports_plain_local_folders_without_git_metadata(self) -> None:
+        from typst_forge.registry import install_source
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            home = temp / "home"
+            home.mkdir()
+            project = temp / "plain-package"
+            project.mkdir()
+            project.joinpath("src").mkdir()
+            project.joinpath("typst.toml").write_text(
+                "\n".join(
+                    [
+                        "[package]",
+                        'name = "plain-package"',
+                        'version = "0.3.0"',
+                        'entrypoint = "src/lib.typ"',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            project.joinpath("src", "lib.typ").write_text('#let hello(name) = "Hello, " + name\n', encoding="utf-8")
+
+            with patch("typst_forge.git.git_state", side_effect=FileNotFoundError):
+                record = install_source(
+                    project,
+                    registry_root_override=str(home / ".local" / "share" / "typst" / "packages"),
+                    cache_root_override=str(home / ".cache" / "typst-forge"),
+                    link_mode="copy",
+                )
+
+            install_path = home / ".local" / "share" / "typst" / "packages" / "local" / "plain-package" / "0.3.0"
+            self.assertEqual(record.package, "plain-package")
+            self.assertEqual(record.version, "0.3.0")
+            self.assertTrue(install_path.exists())
+            self.assertTrue((install_path / "src" / "lib.typ").is_file())
+
     def test_init_creates_expected_layouts(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp = Path(tempdir)

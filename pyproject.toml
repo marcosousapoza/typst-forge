@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "typst-forge"
-version = "0.1.0"
+version = "0.1.1"
 description = "A local manager for Typst templates and packages"
 readme = "README.md"
 requires-python = ">=3.11"
