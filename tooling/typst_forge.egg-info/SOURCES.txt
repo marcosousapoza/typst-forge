@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+tooling/typst_forge/__init__.py
+tooling/typst_forge/__main__.py
+tooling/typst_forge/cli.py
+tooling/typst_forge/config.py
+tooling/typst_forge/git.py
+tooling/typst_forge/manifest.py
+tooling/typst_forge/registry.py
+tooling/typst_forge/scaffold.py
+tooling/typst_forge/source.py
+tooling/typst_forge.egg-info/PKG-INFO
+tooling/typst_forge.egg-info/SOURCES.txt
+tooling/typst_forge.egg-info/dependency_links.txt
+tooling/typst_forge.egg-info/entry_points.txt
+tooling/typst_forge.egg-info/top_level.txt
