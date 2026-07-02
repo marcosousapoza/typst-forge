@@ -75,4 +75,3 @@ def source_label(spec: SourceSpec) -> str:
     if spec.url:
         return spec.url
     return spec.raw
-

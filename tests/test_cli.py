@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def git(*args: str, cwd: Path) -> None:
@@ -19,10 +19,11 @@ def forge(*args: str, home: Path, capture_output: bool = False) -> subprocess.Co
     env["HOME"] = str(home)
     env["XDG_DATA_HOME"] = str(home / ".local" / "share")
     env["XDG_CACHE_HOME"] = str(home / ".cache")
+    env["PYTHONPATH"] = str(ROOT / "src")
     kwargs: dict[str, object] = {"cwd": ROOT, "check": True, "text": True, "env": env}
     if capture_output:
         kwargs["capture_output"] = True
-    return subprocess.run(["uv", "run", "typst-forge", *args], **kwargs)
+    return subprocess.run(["python3", "-m", "typst_forge", *args], **kwargs)
 
 
 def init_repo(root: Path, kind: str, name: str, version: str) -> Path:

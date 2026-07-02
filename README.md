@@ -55,5 +55,12 @@ typst-forge remove my-package
 Run the in-repo test suite with:
 
 ```bash
-uv run python -m unittest discover -s tooling/typst_forge/tests -t tooling -v
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
+
+## Publishing
+
+The GitHub Actions workflow in [.github/workflows/publish.yml](./.github/workflows/publish.yml)
+publishes tagged releases to PyPI with trusted publishing.
+
+Create and push a version tag like `v0.1.0` to trigger it.

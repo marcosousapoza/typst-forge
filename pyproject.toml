@@ -14,9 +14,8 @@ dependencies = []
 typst-forge = "typst_forge.cli:main"
 
 [tool.setuptools]
-package-dir = {"" = "tooling"}
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["tooling"]
+where = ["src"]
 include = ["typst_forge", "typst_forge.*"]
-exclude = ["typst_forge.tests", "typst_forge.tests.*"]

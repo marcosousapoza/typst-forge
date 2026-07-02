@@ -32,4 +32,3 @@ def cache_root(override: str | None = None) -> Path:
     if override:
         return Path(override).expanduser()
     return default_cache_root()
-
