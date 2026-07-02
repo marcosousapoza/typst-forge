@@ -1,0 +1,4 @@
+This repo will be used to develop my typst templates and repositories that I am going to use locally. The first thing I need it a cli tool that
+  can be used for managing/installing the templates/repositories locally. The typst documentation stores local repos in the following directory
+  (~/.local/share/typst/packages/<namespace>/<package_name>/<version>). The default namespace is local but one can create any namespace. I want the
+  cli tool to simlink our projects there and in general manage packages and versioning with git un
