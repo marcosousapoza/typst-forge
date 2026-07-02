@@ -12,19 +12,25 @@ It can:
 
 ## Install
 
-This repo is meant to be run with `uv`:
+Run the CLI from a checkout with `uv`:
 
 ```bash
 uv run typst-forge --help
 ```
 
-To run it without installing from a checkout, use `uvx`:
+To run the published package from PyPI, use `uvx`:
+
+```bash
+uvx typst-forge --help
+```
+
+To run directly from this checkout without installing it, use `uvx`:
 
 ```bash
 uvx --from . typst-forge --help
 ```
 
-You can also install directly from GitHub:
+You can also run it directly from GitHub:
 
 ```bash
 uvx --from git+https://github.com/<owner>/typst-forge typst-forge --help
@@ -55,7 +61,7 @@ typst-forge remove my-package
 Run the in-repo test suite with:
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -v
+uv run python -m unittest discover -s tests -v
 ```
 
 ## Publishing

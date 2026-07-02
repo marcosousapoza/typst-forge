@@ -1,2 +1,0 @@
-[console_scripts]
-typst-forge = typst_forge.cli:main
