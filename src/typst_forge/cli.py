@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("path", nargs="?", default=".")
     init_parser.add_argument("--kind", choices=["template", "package"], default="package")
     init_parser.add_argument("--name")
+    init_parser.add_argument("--namespace", default="local")
     init_parser.add_argument("--version", default="0.1.0")
     init_parser.set_defaults(handler=_cmd_init)
 
@@ -92,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
 def _cmd_init(args: argparse.Namespace) -> int:
     root = Path(args.path)
     name = args.name or root.resolve().name.replace("_", "-")
-    scaffold_project(root, args.kind, name, args.version)
+    scaffold_project(root, args.kind, name, args.version, namespace=args.namespace)
     print(f"initialized {args.kind} project at {root.resolve()}")
     return 0
 

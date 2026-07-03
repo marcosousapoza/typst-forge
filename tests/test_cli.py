@@ -91,6 +91,32 @@ class TypstForgeCliTest(unittest.TestCase):
             self.assertTrue((template_repo / "typst.toml").is_file())
             self.assertTrue((template_repo / "src" / "lib.typ").is_file())
             self.assertTrue((template_repo / "template" / "main.typ").is_file())
+            self.assertIn(
+                '#import "@local/dummy-template:0.1.0": render',
+                (template_repo / "template" / "main.typ").read_text(encoding="utf-8"),
+            )
+
+    def test_init_uses_requested_namespace_in_template_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            repo = temp / "custom-template"
+
+            forge(
+                "init",
+                str(repo),
+                "--kind",
+                "template",
+                "--name",
+                "custom-template",
+                "--namespace",
+                "preview",
+                "--version",
+                "0.4.0",
+                home=temp,
+            )
+
+            main_typ = (repo / "template" / "main.typ").read_text(encoding="utf-8")
+            self.assertIn('#import "@preview/custom-template:0.4.0": render', main_typ)
 
     def test_local_install_update_list_and_remove(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
