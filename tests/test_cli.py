@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import tempfile
@@ -27,7 +28,7 @@ def forge(*args: str, home: Path, capture_output: bool = False) -> subprocess.Co
 
 
 def init_repo(root: Path, kind: str, name: str, version: str) -> Path:
-    forge("init", str(root), "--kind", kind, "--name", name, "--version", version, home=root.parent)
+    forge("init", str(root), "--kind", kind, "--version", version, home=root.parent)
     git("config", "user.email", "test@example.com", cwd=root)
     git("config", "user.name", "Test User", cwd=root)
     git("add", ".", cwd=root)
@@ -37,6 +38,30 @@ def init_repo(root: Path, kind: str, name: str, version: str) -> Path:
 
 
 class TypstForgeCliTest(unittest.TestCase):
+    def test_init_without_target_uses_current_directory_name(self) -> None:
+        from typst_forge.cli import _cmd_init
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            args = argparse.Namespace(
+                target=".",
+                kind="template",
+                namespace="local",
+                version="0.1.0",
+            )
+
+            with patch("typst_forge.cli.Path.cwd", return_value=temp), patch(
+                "typst_forge.cli.scaffold_project"
+            ) as scaffold:
+                _cmd_init(args)
+
+            scaffold.assert_called_once()
+            call_args = scaffold.call_args.args
+            self.assertEqual(call_args[0], temp)
+            self.assertEqual(call_args[1], "template")
+            self.assertEqual(call_args[2], temp.name.replace("_", "-"))
+            self.assertEqual(call_args[3], "0.1.0")
+
     def test_install_supports_plain_local_folders_without_git_metadata(self) -> None:
         from typst_forge.registry import install_source
 
@@ -106,8 +131,6 @@ class TypstForgeCliTest(unittest.TestCase):
                 str(repo),
                 "--kind",
                 "template",
-                "--name",
-                "custom-template",
                 "--namespace",
                 "preview",
                 "--version",
@@ -117,6 +140,28 @@ class TypstForgeCliTest(unittest.TestCase):
 
             main_typ = (repo / "template" / "main.typ").read_text(encoding="utf-8")
             self.assertIn('#import "@preview/custom-template:0.4.0": render', main_typ)
+
+    def test_init_uses_positional_target_as_package_name(self) -> None:
+        from typst_forge.cli import _cmd_init
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp = Path(tempdir)
+            args = argparse.Namespace(
+                target="dach-resume",
+                kind="template",
+                namespace="local",
+                version="0.1.0",
+            )
+
+            with patch("typst_forge.cli.Path.cwd", return_value=temp):
+                _cmd_init(args)
+
+            repo = temp / "dach-resume"
+            self.assertTrue((repo / "typst.toml").is_file())
+            self.assertIn(
+                '#import "@local/dach-resume:0.1.0": render',
+                (repo / "template" / "main.typ").read_text(encoding="utf-8"),
+            )
 
     def test_local_install_update_list_and_remove(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

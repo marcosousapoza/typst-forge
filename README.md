@@ -39,8 +39,9 @@ uvx --from git+https://github.com/marcosousapoza/typst-forge typst-forge --help
 ## Commands
 
 ```bash
-typst-forge init ./my-template --kind template --name my-template --namespace local --version 0.1.0
-typst-forge init ./my-package --kind package --name my-package --version 0.1.0
+typst-forge init my-template --kind template --namespace local --version 0.1.0
+typst-forge init my-package --kind package --version 0.1.0
+typst-forge init . --kind template --namespace local --version 0.1.0
 typst-forge install ./my-package --link-mode copy
 typst-forge install github:owner/repo@v1.2.3
 typst-forge list

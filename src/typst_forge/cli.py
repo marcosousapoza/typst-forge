@@ -19,9 +19,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="Create a new Typst project")
-    init_parser.add_argument("path", nargs="?", default=".")
+    init_parser.add_argument("target", nargs="?", default=".")
     init_parser.add_argument("--kind", choices=["template", "package"], default="package")
-    init_parser.add_argument("--name")
     init_parser.add_argument("--namespace", default="local")
     init_parser.add_argument("--version", default="0.1.0")
     init_parser.set_defaults(handler=_cmd_init)
@@ -91,8 +90,13 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
-    root = Path(args.path)
-    name = args.name or root.resolve().name.replace("_", "-")
+    target = Path(args.target)
+    if args.target == ".":
+        root = Path.cwd()
+        name = root.name.replace("_", "-")
+    else:
+        root = Path.cwd() / target
+        name = target.name.replace("_", "-")
     scaffold_project(root, args.kind, name, args.version, namespace=args.namespace)
     print(f"initialized {args.kind} project at {root.resolve()}")
     return 0
