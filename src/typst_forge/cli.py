@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
+from .bump import bump_project
 from .registry import (
+    LocalSourceRelocationError,
     install_source,
     installation_status,
     list_installed_packages,
@@ -26,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser.set_defaults(handler=_cmd_init)
 
     install_parser = subparsers.add_parser(
-        "install", help="Install a local path or GitHub source"
+        "install", help="Install a local path, GitHub source, or git URL"
     )
     install_parser.add_argument("source")
     install_parser.add_argument("--namespace", default="local")
@@ -39,7 +42,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="How installed projects should be materialized",
     )
-    install_parser.add_argument("--force", action="store_true")
+    install_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace an existing entry, including a moved local source",
+    )
     install_parser.set_defaults(handler=_cmd_install)
 
     update_parser = subparsers.add_parser(
@@ -81,6 +88,13 @@ def build_parser() -> argparse.ArgumentParser:
     status_parser.add_argument("--registry-root", help="Override the Typst packages root")
     status_parser.set_defaults(handler=_cmd_status)
 
+    bump_parser = subparsers.add_parser(
+        "bump", help="Bump typst.toml, commit the change, and create a Git tag"
+    )
+    bump_parser.add_argument("version", help="major, minor, patch, or an exact X.Y.Z version")
+    bump_parser.add_argument("--registry-root", help="Override the Typst packages root")
+    bump_parser.set_defaults(handler=_cmd_bump)
+
     return parser
 
 
@@ -103,17 +117,35 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
 
 def _cmd_install(args: argparse.Namespace) -> int:
-    record = install_source(
+    try:
+        record = _install(args, force=args.force)
+    except LocalSourceRelocationError as exc:
+        if not sys.stdin.isatty():
+            print(f"{exc}; rerun with --force to repoint it", file=sys.stderr)
+            return 2
+        answer = input(
+            f"{exc.existing.namespace}/{exc.existing.package}/{exc.existing.version} "
+            f"is installed from {exc.existing.source_location}.\n"
+            f"Repoint it to {exc.new_source}? [y/N] "
+        )
+        if answer.strip().lower() not in {"y", "yes"}:
+            print("installation unchanged")
+            return 1
+        record = _install(args, force=True)
+    print(f"installed {record.package} {record.version} -> {record.installed_root}")
+    return 0
+
+
+def _install(args: argparse.Namespace, force: bool):
+    return install_source(
         args.source,
         namespace=args.namespace,
         version=args.version,
         link_mode=args.link_mode,
         registry_root_override=args.registry_root,
         cache_root_override=args.cache_root,
-        force=args.force,
+        force=force,
     )
-    print(f"installed {record.package} {record.version} -> {record.installed_root}")
-    return 0
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -164,4 +196,17 @@ def _cmd_status(args: argparse.Namespace) -> int:
     )
     for key in sorted(status):
         print(f"{key}: {status[key]}")
+    return 0
+
+
+def _cmd_bump(args: argparse.Namespace) -> int:
+    result = bump_project(
+        Path.cwd(),
+        args.version,
+        registry_root_override=args.registry_root,
+    )
+    print(f"bumped {result.project} {result.old_version} -> {result.new_version}")
+    print(f"created commit and tag {result.tag}")
+    for record in result.installations:
+        print(f"installed {record.package} {record.version} -> {record.installed_root}")
     return 0

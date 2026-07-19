@@ -30,6 +30,16 @@ class InstallRecord:
         return Path(self.installed_root)
 
 
+class LocalSourceRelocationError(FileExistsError):
+    def __init__(self, existing: InstallRecord, new_source: Path) -> None:
+        self.existing = existing
+        self.new_source = new_source
+        super().__init__(
+            f"{existing.namespace}/{existing.package}/{existing.version} is already "
+            f"installed from {existing.source_location}; new source is {new_source}"
+        )
+
+
 def package_registry_path(root: str | None, namespace: str, package_name: str, version: str) -> Path:
     return registry_root(root) / namespace / package_name / version
 
@@ -55,6 +65,22 @@ def install_source(
         cache_root_override=cache_root_override,
     )
     target = package_registry_path(registry_root_override, namespace, manifest.name, resolved_version)
+    existing = _record_at(
+        target,
+        namespace,
+        manifest.name,
+        resolved_version,
+        registry_root_override,
+    )
+    if (
+        not force
+        and spec.kind == "local"
+        and existing is not None
+        and existing.source_kind == "local"
+        and existing.install_path.is_symlink()
+        and not _same_path(existing.source_location, source_location)
+    ):
+        raise LocalSourceRelocationError(existing, install_root)
     _install_tree(install_root, target, link_mode=link_mode, force=force)
     record = InstallRecord(
         namespace=namespace,
@@ -95,6 +121,25 @@ def update_installation(
             )
         )
     return updated
+
+
+def local_installations(
+    source: str | Path,
+    version: str | None = None,
+    registry_root_override: str | None = None,
+) -> list[InstallRecord]:
+    source_path = Path(source).expanduser().resolve(strict=False)
+    records = _load_records(registry_root_override)
+    if not records:
+        records = _scan_registry(registry_root_override)
+    matching = [
+        record
+        for record in records
+        if record.source_kind == "local"
+        and _same_path(record.source_location, source_path)
+        and (version is None or record.version == version)
+    ]
+    return sorted(matching, key=lambda item: (item.namespace, item.package, item.version))
 
 
 def remove_installation(
@@ -334,6 +379,31 @@ def _write_record(record: InstallRecord, registry_root_override: str | None) -> 
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = asdict(record)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _record_at(
+    target: Path,
+    namespace: str,
+    package: str,
+    version: str,
+    registry_root_override: str | None,
+) -> InstallRecord | None:
+    for record in _load_records(registry_root_override):
+        if (
+            record.namespace == namespace
+            and record.package == package
+            and record.version == version
+        ):
+            return record
+    if target.exists() or target.is_symlink():
+        return _record_from_path(target, namespace, package)
+    return None
+
+
+def _same_path(left: str | Path, right: str | Path) -> bool:
+    return Path(left).expanduser().resolve(strict=False) == Path(right).expanduser().resolve(
+        strict=False
+    )
 
 
 def _remove_record(record: InstallRecord, registry_root_override: str | None) -> None:
