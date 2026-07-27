@@ -200,6 +200,12 @@ def _cmd_status(args: argparse.Namespace) -> int:
 
 
 def _cmd_bump(args: argparse.Namespace) -> int:
+    print(
+        "info: this creates a local commit and tag only\n"
+        "info: publish with `git push` and `git push --tags`\n"
+        "info: on GitHub/GitLab, create or update the release for the tag",
+        file=sys.stderr,
+    )
     result = bump_project(
         Path.cwd(),
         args.version,
