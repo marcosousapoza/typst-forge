@@ -314,6 +314,18 @@ class TypstForgeCliTest(unittest.TestCase):
                 capture_output=True,
             )
 
+            self.assertIn(
+                "info: this creates a local commit and tag only",
+                result.stderr,
+            )
+            self.assertIn(
+                "info: publish with `git push` and `git push --tags`",
+                result.stderr,
+            )
+            self.assertIn(
+                "info: on GitHub/GitLab, create or update the release for the tag",
+                result.stderr,
+            )
             self.assertIn("1.2.3 -> 1.3.0", result.stdout)
             self.assertIn('version = "1.3.0"', (repo / "typst.toml").read_text(encoding="utf-8"))
             template_content = template.read_text(encoding="utf-8")
