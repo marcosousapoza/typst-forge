@@ -8,10 +8,11 @@ version = "0.2.0"
 description = "A local manager for Typst templates and packages"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["mcp>=2.0,<3"]
 
 [project.scripts]
 typst-forge = "typst_forge.cli:main"
+typst-forge-mcp = "typst_forge.mcp:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

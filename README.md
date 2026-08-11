@@ -37,6 +37,52 @@ You can also run it directly from GitHub:
 uvx --from git+https://github.com/marcosousapoza/typst-forge typst-forge --help
 ```
 
+## MCP server
+
+Typst Forge also includes a stdio [Model Context Protocol](https://modelcontextprotocol.io/)
+server. It exposes `init_project`, `install`, `update`, `remove`, `list`,
+`status`, and `bump` as agent-friendly tools. The official Python MCP SDK is
+used so the schemas are generated directly from the same typed functions that
+call the existing library API.
+
+Run the published server without a permanent installation:
+
+```bash
+uvx --from typst-forge typst-forge-mcp
+```
+
+For a checkout or an unreleased Git revision, use one of these equivalents:
+
+```bash
+uvx --from . typst-forge-mcp
+uvx --from git+https://github.com/marcosousapoza/typst-forge typst-forge-mcp
+```
+
+Use that command as a stdio MCP server in an agent configuration. For example,
+the portable JSON form used by many MCP clients is:
+
+```json
+{
+  "mcpServers": {
+    "typst-forge": {
+      "command": "uvx",
+      "args": ["--from", "typst-forge", "typst-forge-mcp"]
+    }
+  }
+}
+```
+
+As install helpers, clients with MCP registration commands can add the same
+server directly:
+
+```bash
+claude mcp add --transport stdio typst-forge -- uvx --from typst-forge typst-forge-mcp
+codex mcp add typst-forge -- uvx --from typst-forge typst-forge-mcp
+```
+
+The server writes MCP messages to standard output, so do not wrap its command
+with anything that prints banners or other output.
+
 ## Commands
 
 ```bash
